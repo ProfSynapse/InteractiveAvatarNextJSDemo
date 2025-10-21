@@ -38,6 +38,8 @@ const DEFAULT_CONFIG: StartAvatarRequest = {
   },
 };
 
+const DEFAULT_HEYGEN_BASE_URL = "https://api.heygen.com";
+
 function InteractiveAvatar() {
   const { initAvatar, startAvatar, stopAvatar, sessionState, stream } =
     useStreamingAvatarSession();
@@ -158,7 +160,11 @@ function InteractiveAvatar() {
 
 export default function InteractiveAvatarWrapper() {
   return (
-    <StreamingAvatarProvider basePath={process.env.NEXT_PUBLIC_BASE_API_URL}>
+    <StreamingAvatarProvider
+      basePath={
+        process.env.NEXT_PUBLIC_BASE_API_URL ?? DEFAULT_HEYGEN_BASE_URL
+      }
+    >
       <InteractiveAvatar />
     </StreamingAvatarProvider>
   );

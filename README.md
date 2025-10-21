@@ -40,3 +40,25 @@ You can create your own custom Interactive Avatars at labs.heygen.com/interactiv
 ### Where can I read more about enterprise-level usage of the Interactive Avatar API?
 
 Please read our Interactive Avatar 101 article for more information on pricing: https://help.heygen.com/en/articles/9182113-interactive-avatar-101-your-ultimate-guide
+
+## Deploying to Railway (no login required for end users)
+
+Hosting this project on [Railway](https://railway.com) keeps your HeyGen credentials on the server so visitors can launch an avatar session without creating an account. A typical deployment flow looks like this:
+
+1. **Prepare your repository**
+   - Copy `.env.example` to `.env` and fill in your HeyGen API key.
+   - Commit your changes and push them to GitHub (or the git provider you connect to Railway).
+
+2. **Create a new Railway service**
+   - In the Railway dashboard choose **New Project > Deploy from GitHub** and select your repository.
+   - When prompted, set an environment variable `HEYGEN_API_KEY` with the same value you use locally.
+   - (Optional) Override `NEXT_PUBLIC_BASE_API_URL` if you are targeting a non-default HeyGen endpoint.
+
+3. **Build & run commands**
+   - Railway detects this as a Next.js app. If you need to override commands, use `npm install`, `npm run build`, then `npm run start`.
+   - Railway automatically injects the `PORT` variable; `next start` will listen on it so no extra configuration is needed.
+
+4. **Go live**
+   - Once the deployment finishes, open the Railway-provided URL. The frontend calls `/api/get-access-token`, which uses the server-side `HEYGEN_API_KEY` to mint access tokens so visitors can start sessions immediately.
+
+If you need to tweak build settings later, add a `railway.toml` with your custom commands, or manage environment variables under the **Variables** tab in Railway.
