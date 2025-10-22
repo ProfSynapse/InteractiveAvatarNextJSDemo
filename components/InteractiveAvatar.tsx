@@ -58,12 +58,8 @@ const BRANDING = {
     "https://picoshare-production-7223.up.railway.app/-tTSpgX2kQF/brewspot%20logo.png",
   title: "Meet BrewSpot Becca",
   description:
-    "BrewSpot Becca is the resident coffee curator, here to help you explore the BrewSpot platform, share product insights, and plan unforgettable cafe experiences.",
-  steps: [
-    "Press Start Chat when you're ready for Becca to join the conversation and guide you.",
-    "Ask Becca about BrewSpot's menu, programs, or events to get tailored insights.",
-    "Use the recommendations to plan your next cafe experience.",
-  ],
+    "BrewSpot Becca is here to help you practice speaking with clients while you plan a marketing campaign.",
+  instructions: ["Press Start to begin.", "Press End to stop."],
 } as const;
 
 function InteractiveAvatar() {
@@ -153,39 +149,36 @@ function InteractiveAvatar() {
   const isInactive = sessionState === StreamingAvatarSessionState.INACTIVE;
   const isConnecting = sessionState === StreamingAvatarSessionState.CONNECTING;
   const isConnected = sessionState === StreamingAvatarSessionState.CONNECTED;
-  const { logoSrc, title, description, steps } = BRANDING;
+  const { logoSrc, title, description, instructions } = BRANDING;
 
   return (
     <div className="flex w-full flex-col items-center gap-6 text-[#4a2f22]">
       <div className="relative w-full overflow-hidden rounded-3xl border border-[#d4c2b2] bg-[#fffaf3] shadow-[0_24px_80px_rgba(93,67,43,0.15)]">
         <div className="aspect-video w-full">
           {isInactive ? (
-            <div className="flex h-full w-full flex-col items-center justify-center gap-5 bg-[#f7efe5] px-10 py-12 text-center">
-              <img
-                src={logoSrc}
-                alt={`${title} logo`}
-                referrerPolicy="no-referrer"
-                className="h-20 w-auto max-w-[200px] drop-shadow-md"
-              />
-              <div className="flex max-w-xl flex-col items-center gap-3 text-[#704c35]">
+            <div className="flex h-full w-full flex-col items-center justify-center gap-8 bg-[#f7efe5] px-10 py-12 text-center md:flex-row md:items-center md:justify-between md:text-left">
+              <div className="flex shrink-0 items-center justify-center">
+                <img
+                  src={logoSrc}
+                  alt={`${title} logo`}
+                  referrerPolicy="no-referrer"
+                  className="h-40 w-auto max-w-[320px] drop-shadow-lg md:h-48"
+                />
+              </div>
+              <div className="flex max-w-xl flex-col items-center gap-4 text-[#704c35] md:items-start">
                 <p className="text-2xl font-semibold">{title}</p>
                 <p className="text-base text-[#87614a]">{description}</p>
-              </div>
-              {steps.length > 0 && (
-                <div className="flex w-full max-w-xl flex-col items-center gap-3 text-left">
-                  <p className="text-sm font-semibold uppercase tracking-wide text-[#b87241]">
-                    How it works
-                  </p>
+                {instructions.length > 0 && (
                   <ul className="flex w-full flex-col gap-2 text-sm text-[#6d4f3b]">
-                    {steps.map((step) => (
-                      <li key={step} className="flex items-start gap-3">
+                    {instructions.map((instruction) => (
+                      <li key={instruction} className="flex items-start gap-3">
                         <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#b87241]" />
-                        <span>{step}</span>
+                        <span>{instruction}</span>
                       </li>
                     ))}
                   </ul>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           ) : (
             <AvatarVideo ref={mediaStream} />
