@@ -8,6 +8,7 @@ export default function App() {
         <img
           src="https://49607860.fs1.hubspotusercontent-na1.net/hubfs/49607860/BrewSpot%20Collateral/brewspot%20logo.png"
           alt="BrewSpot logo"
+          referrerPolicy="no-referrer"
           className="h-16 w-auto drop-shadow-md"
         />
         <p className="max-w-2xl text-lg text-[#4a2f22]">
