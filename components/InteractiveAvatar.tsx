@@ -21,13 +21,6 @@ import { LoadingIcon } from "./Icons";
 
 import { AVATARS } from "@/app/lib/constants";
 
-export type InteractiveAvatarBranding = {
-  logoSrc: string;
-  title: string;
-  description: string;
-  steps: string[];
-};
-
 const ENV_AVATAR_ID = process.env.NEXT_PUBLIC_HEYGEN_AVATAR_ID?.trim();
 const ENV_KNOWLEDGE_BASE_ID =
   process.env.NEXT_PUBLIC_HEYGEN_KNOWLEDGE_BASE_ID?.trim();
@@ -60,11 +53,20 @@ const DEFAULT_CONFIG: StartAvatarRequest = {
 
 const DEFAULT_HEYGEN_BASE_URL = "https://api.heygen.com";
 
-type InteractiveAvatarProps = {
-  branding: InteractiveAvatarBranding;
-};
+const BRANDING = {
+  logoSrc:
+    "https://picoshare-production-7223.up.railway.app/-tTSpgX2kQF/brewspot%20logo.png",
+  title: "Meet BrewSpot Becca",
+  description:
+    "BrewSpot Becca is the resident coffee curator, here to help you explore the BrewSpot platform, share product insights, and plan unforgettable cafe experiences.",
+  steps: [
+    "Press Start Chat when you're ready for Becca to join the conversation and guide you.",
+    "Ask Becca about BrewSpot's menu, programs, or events to get tailored insights.",
+    "Use the recommendations to plan your next cafe experience.",
+  ],
+} as const;
 
-function InteractiveAvatar({ branding }: InteractiveAvatarProps) {
+function InteractiveAvatar() {
   const { initAvatar, startAvatar, stopAvatar, sessionState, stream } =
     useStreamingAvatarSession();
   const { startVoiceChat } = useVoiceChat();
@@ -151,7 +153,7 @@ function InteractiveAvatar({ branding }: InteractiveAvatarProps) {
   const isInactive = sessionState === StreamingAvatarSessionState.INACTIVE;
   const isConnecting = sessionState === StreamingAvatarSessionState.CONNECTING;
   const isConnected = sessionState === StreamingAvatarSessionState.CONNECTED;
-  const { logoSrc, title, description, steps } = branding;
+  const { logoSrc, title, description, steps } = BRANDING;
 
   return (
     <div className="flex w-full flex-col items-center gap-6 text-[#4a2f22]">
@@ -218,41 +220,14 @@ function InteractiveAvatar({ branding }: InteractiveAvatarProps) {
   );
 }
 
-type InteractiveAvatarWrapperProps = {
-  branding?: InteractiveAvatarBranding;
-};
-
-const DEFAULT_BRANDING: InteractiveAvatarBranding = {
-  logoSrc:
-    process.env.NEXT_PUBLIC_BRAND_LOGO_URL?.trim() ??
-    "https://picoshare-production-7223.up.railway.app/-tTSpgX2kQF/brewspot%20logo.png",
-  title:
-    process.env.NEXT_PUBLIC_BRAND_TITLE?.trim() ?? "Meet BrewSpot Becca",
-  description:
-    process.env.NEXT_PUBLIC_BRAND_SUMMARY?.trim() ??
-    "Press Start Chat when you are ready for Becca to join the conversation and guide you through BrewSpot's offerings.",
-  steps:
-    process.env.NEXT_PUBLIC_BRAND_STEPS?.split("|")
-      .map((step) => step.trim())
-      .filter(Boolean) ?? [
-      "Press Start Chat when you're ready for Becca to join the conversation and guide you.",
-      "Ask Becca about BrewSpot's menu, programs, or events to get tailored insights.",
-      "Use the recommendations to plan your next cafe experience.",
-    ],
-};
-
-export default function InteractiveAvatarWrapper({
-  branding,
-}: InteractiveAvatarWrapperProps) {
-  const resolvedBranding = branding ?? DEFAULT_BRANDING;
-
+export default function InteractiveAvatarWrapper() {
   return (
     <StreamingAvatarProvider
       basePath={
         process.env.NEXT_PUBLIC_BASE_API_URL ?? DEFAULT_HEYGEN_BASE_URL
       }
     >
-      <InteractiveAvatar branding={resolvedBranding} />
+      <InteractiveAvatar />
     </StreamingAvatarProvider>
   );
 }
