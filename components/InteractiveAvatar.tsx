@@ -19,10 +19,24 @@ import { LoadingIcon } from "./Icons";
 
 import { AVATARS } from "@/app/lib/constants";
 
+const ENV_AVATAR_ID = process.env.NEXT_PUBLIC_HEYGEN_AVATAR_ID?.trim();
+const ENV_KNOWLEDGE_BASE_ID =
+  process.env.NEXT_PUBLIC_HEYGEN_KNOWLEDGE_BASE_ID?.trim();
+
+const DEFAULT_AVATAR_ID =
+  ENV_AVATAR_ID && ENV_AVATAR_ID.length > 0
+    ? ENV_AVATAR_ID
+    : AVATARS[0]?.avatar_id ?? "";
+
+const DEFAULT_KNOWLEDGE_ID =
+  ENV_KNOWLEDGE_BASE_ID && ENV_KNOWLEDGE_BASE_ID.length > 0
+    ? ENV_KNOWLEDGE_BASE_ID
+    : undefined;
+
 const DEFAULT_CONFIG: StartAvatarRequest = {
   quality: AvatarQuality.Low,
-  avatarName: AVATARS[0].avatar_id,
-  knowledgeId: undefined,
+  avatarName: DEFAULT_AVATAR_ID,
+  knowledgeId: DEFAULT_KNOWLEDGE_ID,
   voice: {
     rate: 1.5,
     emotion: VoiceEmotion.EXCITED,
