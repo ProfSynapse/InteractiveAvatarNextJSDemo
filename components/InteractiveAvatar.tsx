@@ -86,7 +86,7 @@ function InteractiveAvatar() {
           
           setConfig(prev => ({
             ...prev,
-            avatarName: promptConfig.avatar_id || prev.avatarName,
+            avatarName: promptConfig.avatar_id || prev.avatarName, // YAML avatar_id takes priority
             knowledgeBase: promptConfig.system_prompt, // Use knowledgeBase for direct prompt
             knowledgeId: promptConfig.knowledge_base_id || prev.knowledgeId, // Fallback to KB ID if available
             voice: {
@@ -96,10 +96,15 @@ function InteractiveAvatar() {
             },
           }));
           
-          console.log('✅ Loaded system prompt from YAML:', promptConfig.name);
+          console.log('✅ Loaded configuration from YAML:');
+          console.log('   Name:', promptConfig.name);
+          console.log('   Avatar ID:', promptConfig.avatar_id);
+          console.log('   Voice Rate:', promptConfig.voice?.rate);
+          console.log('   Voice Emotion:', promptConfig.voice?.emotion);
+          console.log('   System Prompt Length:', promptConfig.system_prompt?.length, 'characters');
         }
       } catch (error) {
-        console.error('Failed to load system prompt:', error);
+        console.error('❌ Failed to load system prompt:', error);
       }
     }
     
