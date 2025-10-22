@@ -54,6 +54,7 @@ const DEFAULT_CONFIG: StartAvatarRequest = {
 };
 
 const DEFAULT_HEYGEN_BASE_URL = "https://api.heygen.com";
+const SESSION_DURATION_SECONDS = 15 * 60;
 
 const BRANDING = {
   logoSrc:
@@ -70,9 +71,11 @@ function InteractiveAvatar() {
   const { startVoiceChat } = useVoiceChat();
 
   const [config, setConfig] = useState<StartAvatarRequest>(DEFAULT_CONFIG);
+  const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
 
   const mediaStream = useRef<HTMLVideoElement>(null);
   const sessionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sessionIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Load system prompt from YAML on mount
   useEffect(() => {
@@ -118,8 +121,17 @@ function InteractiveAvatar() {
     }
   });
 
+  const clearSessionInterval = useMemoizedFn(() => {
+    if (sessionIntervalRef.current) {
+      clearInterval(sessionIntervalRef.current);
+      sessionIntervalRef.current = null;
+    }
+  });
+
   const handleStopSession = useMemoizedFn(() => {
     clearSessionTimeout();
+    clearSessionInterval();
+    setRemainingSeconds(null);
     stopAvatar();
   });
 
@@ -177,16 +189,34 @@ function InteractiveAvatar() {
 
       await startAvatar(config);
       clearSessionTimeout();
+      clearSessionInterval();
+      setRemainingSeconds(SESSION_DURATION_SECONDS);
+      sessionIntervalRef.current = setInterval(() => {
+        setRemainingSeconds((prev) => {
+          if (prev === null) {
+            return prev;
+          }
+
+          if (prev <= 1) {
+            return 0;
+          }
+
+          return prev - 1;
+        });
+      }, 1000);
       sessionTimeoutRef.current = setTimeout(() => {
         console.log("Auto-ending session after 15 minutes.");
         handleStopSession();
-      }, 15 * 60 * 1000);
+      }, SESSION_DURATION_SECONDS * 1000);
 
       if (isVoiceChat) {
         await startVoiceChat();
       }
     } catch (error) {
       console.error("Error starting avatar session:", error);
+      clearSessionTimeout();
+      clearSessionInterval();
+      setRemainingSeconds(null);
     }
   });
 
@@ -210,10 +240,25 @@ function InteractiveAvatar() {
   useEffect(() => {
     if (isInactive) {
       clearSessionTimeout();
+      clearSessionInterval();
+      setRemainingSeconds(null);
     }
-  }, [isInactive, clearSessionTimeout]);
+  }, [isInactive, clearSessionTimeout, clearSessionInterval]);
+
+  useEffect(() => {
+    if (remainingSeconds === 0 && !isInactive) {
+      console.log("Auto-ending session after 15 minutes.");
+      handleStopSession();
+    }
+  }, [remainingSeconds, isInactive, handleStopSession]);
 
   const { logoSrc, title, description, instructions } = BRANDING;
+  const formatTime = (totalSeconds: number) => {
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  };
+  const showTimer = remainingSeconds !== null && !isInactive;
 
   return (
     <div className="flex w-full flex-col items-center gap-6 text-[#4a2f22]">
@@ -272,6 +317,11 @@ function InteractiveAvatar() {
         >
           End Chat
         </Button>
+        {showTimer && (
+          <div className="rounded-full border border-[#d4c2b2] bg-[#fffaf3] px-4 py-2 text-sm font-medium text-[#7a553d] shadow-[0_8px_20px_rgba(131,88,49,0.15)]">
+            Auto-ending in {formatTime(remainingSeconds ?? SESSION_DURATION_SECONDS)}
+          </div>
+        )}
       </div>
     </div>
   );
