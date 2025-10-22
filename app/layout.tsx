@@ -14,8 +14,8 @@ const fontMono = FontMono({
 
 export const metadata: Metadata = {
   title: {
-    default: "HeyGen Interactive Avatar SDK Demo",
-    template: `%s - HeyGen Interactive Avatar SDK Demo`,
+    default: "Brewspot Becca",
+    template: `%s - Brewspot Becca`,
   },
   icons: {
     icon: "/favicon.ico",
