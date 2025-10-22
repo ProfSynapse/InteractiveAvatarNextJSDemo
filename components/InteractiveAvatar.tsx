@@ -35,13 +35,15 @@ const DEFAULT_KNOWLEDGE_ID =
     ? ENV_KNOWLEDGE_BASE_ID
     : undefined;
 
+// Default config - will be updated with YAML prompt when loaded
 const DEFAULT_CONFIG: StartAvatarRequest = {
   quality: AvatarQuality.Low,
   avatarName: DEFAULT_AVATAR_ID,
-  knowledgeId: DEFAULT_KNOWLEDGE_ID,
+  knowledgeId: DEFAULT_KNOWLEDGE_ID, // Optional: only if you have KB permissions
+  knowledgeBase: undefined, // Will be loaded from YAML
   voice: {
-    rate: 1.5,
-    emotion: VoiceEmotion.EXCITED,
+    rate: 1.2,
+    emotion: VoiceEmotion.FRIENDLY,
     model: ElevenLabsModel.eleven_flash_v2_5,
   },
   language: "en",
@@ -67,9 +69,54 @@ function InteractiveAvatar() {
     useStreamingAvatarSession();
   const { startVoiceChat } = useVoiceChat();
 
-  const [config] = useState<StartAvatarRequest>(DEFAULT_CONFIG);
+  const [config, setConfig] = useState<StartAvatarRequest>(DEFAULT_CONFIG);
 
   const mediaStream = useRef<HTMLVideoElement>(null);
+  const sessionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Load system prompt from YAML on mount
+  useEffect(() => {
+    async function loadSystemPrompt() {
+      try {
+        const response = await fetch('/api/prompt?id=becca');
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+          const promptConfig = result.data;
+          
+          setConfig(prev => ({
+            ...prev,
+            avatarName: promptConfig.avatar_id || prev.avatarName,
+            knowledgeBase: promptConfig.system_prompt, // Use knowledgeBase for direct prompt
+            knowledgeId: promptConfig.knowledge_base_id || prev.knowledgeId, // Fallback to KB ID if available
+            voice: {
+              ...prev.voice,
+              rate: promptConfig.voice?.rate || prev.voice?.rate,
+              emotion: (promptConfig.voice?.emotion?.toUpperCase() as VoiceEmotion) || prev.voice?.emotion,
+            },
+          }));
+          
+          console.log('✅ Loaded system prompt from YAML:', promptConfig.name);
+        }
+      } catch (error) {
+        console.error('Failed to load system prompt:', error);
+      }
+    }
+    
+    loadSystemPrompt();
+  }, []);
+
+  const clearSessionTimeout = useMemoizedFn(() => {
+    if (sessionTimeoutRef.current) {
+      clearTimeout(sessionTimeoutRef.current);
+      sessionTimeoutRef.current = null;
+    }
+  });
+
+  const handleStopSession = useMemoizedFn(() => {
+    clearSessionTimeout();
+    stopAvatar();
+  });
 
   async function fetchAccessToken() {
     try {
@@ -124,6 +171,11 @@ function InteractiveAvatar() {
       });
 
       await startAvatar(config);
+      clearSessionTimeout();
+      sessionTimeoutRef.current = setTimeout(() => {
+        console.log("Auto-ending session after 15 minutes.");
+        handleStopSession();
+      }, 15 * 60 * 1000);
 
       if (isVoiceChat) {
         await startVoiceChat();
@@ -134,7 +186,7 @@ function InteractiveAvatar() {
   });
 
   useUnmount(() => {
-    stopAvatar();
+    handleStopSession();
   });
 
   useEffect(() => {
@@ -149,6 +201,13 @@ function InteractiveAvatar() {
   const isInactive = sessionState === StreamingAvatarSessionState.INACTIVE;
   const isConnecting = sessionState === StreamingAvatarSessionState.CONNECTING;
   const isConnected = sessionState === StreamingAvatarSessionState.CONNECTED;
+
+  useEffect(() => {
+    if (isInactive) {
+      clearSessionTimeout();
+    }
+  }, [isInactive, clearSessionTimeout]);
+
   const { logoSrc, title, description, instructions } = BRANDING;
 
   return (
@@ -202,7 +261,7 @@ function InteractiveAvatar() {
           Start Chat
         </Button>
         <Button
-          onClick={stopAvatar}
+          onClick={handleStopSession}
           disabled={!isConnected && !isConnecting}
           className="!bg-[#f0e2d2] !text-[#6b4632] hover:!bg-[#e5d3c1] !border !border-[#d1baa4]"
         >
