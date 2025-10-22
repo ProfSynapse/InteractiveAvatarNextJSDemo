@@ -1,3 +1,5 @@
+"use client";
+
 import {
   AvatarQuality,
   StreamingEvents,
@@ -18,6 +20,13 @@ import { StreamingAvatarProvider, StreamingAvatarSessionState } from "./logic";
 import { LoadingIcon } from "./Icons";
 
 import { AVATARS } from "@/app/lib/constants";
+
+export type InteractiveAvatarBranding = {
+  logoSrc: string;
+  title: string;
+  description: string;
+  steps: string[];
+};
 
 const ENV_AVATAR_ID = process.env.NEXT_PUBLIC_HEYGEN_AVATAR_ID?.trim();
 const ENV_KNOWLEDGE_BASE_ID =
@@ -51,7 +60,11 @@ const DEFAULT_CONFIG: StartAvatarRequest = {
 
 const DEFAULT_HEYGEN_BASE_URL = "https://api.heygen.com";
 
-function InteractiveAvatar() {
+type InteractiveAvatarProps = {
+  branding: InteractiveAvatarBranding;
+};
+
+function InteractiveAvatar({ branding }: InteractiveAvatarProps) {
   const { initAvatar, startAvatar, stopAvatar, sessionState, stream } =
     useStreamingAvatarSession();
   const { startVoiceChat } = useVoiceChat();
@@ -138,20 +151,39 @@ function InteractiveAvatar() {
   const isInactive = sessionState === StreamingAvatarSessionState.INACTIVE;
   const isConnecting = sessionState === StreamingAvatarSessionState.CONNECTING;
   const isConnected = sessionState === StreamingAvatarSessionState.CONNECTED;
+  const { logoSrc, title, description, steps } = branding;
 
   return (
     <div className="flex w-full flex-col items-center gap-6 text-[#4a2f22]">
       <div className="relative w-full overflow-hidden rounded-3xl border border-[#d4c2b2] bg-[#fffaf3] shadow-[0_24px_80px_rgba(93,67,43,0.15)]">
         <div className="aspect-video w-full">
           {isInactive ? (
-            <div className="flex h-full w-full flex-col items-center justify-center gap-4 bg-[#f7efe5] px-10 text-center">
-              <p className="text-2xl font-semibold text-[#704c35]">
-                Meet BrewSpot Becca
-              </p>
-              <p className="max-w-md text-base text-[#87614a]">
-                Press Start Chat when you are ready for Becca to join the
-                conversation and guide you through BrewSpot&apos;s offerings.
-              </p>
+            <div className="flex h-full w-full flex-col items-center justify-center gap-5 bg-[#f7efe5] px-10 py-12 text-center">
+              <img
+                src={logoSrc}
+                alt={`${title} logo`}
+                referrerPolicy="no-referrer"
+                className="h-20 w-auto max-w-[200px] drop-shadow-md"
+              />
+              <div className="flex max-w-xl flex-col items-center gap-3 text-[#704c35]">
+                <p className="text-2xl font-semibold">{title}</p>
+                <p className="text-base text-[#87614a]">{description}</p>
+              </div>
+              {steps.length > 0 && (
+                <div className="flex w-full max-w-xl flex-col items-center gap-3 text-left">
+                  <p className="text-sm font-semibold uppercase tracking-wide text-[#b87241]">
+                    How it works
+                  </p>
+                  <ul className="flex w-full flex-col gap-2 text-sm text-[#6d4f3b]">
+                    {steps.map((step) => (
+                      <li key={step} className="flex items-start gap-3">
+                        <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#b87241]" />
+                        <span>{step}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           ) : (
             <AvatarVideo ref={mediaStream} />
@@ -186,14 +218,41 @@ function InteractiveAvatar() {
   );
 }
 
-export default function InteractiveAvatarWrapper() {
+type InteractiveAvatarWrapperProps = {
+  branding?: InteractiveAvatarBranding;
+};
+
+const DEFAULT_BRANDING: InteractiveAvatarBranding = {
+  logoSrc:
+    process.env.NEXT_PUBLIC_BRAND_LOGO_URL?.trim() ??
+    "https://picoshare-production-7223.up.railway.app/-tTSpgX2kQF/brewspot%20logo.png",
+  title:
+    process.env.NEXT_PUBLIC_BRAND_TITLE?.trim() ?? "Meet BrewSpot Becca",
+  description:
+    process.env.NEXT_PUBLIC_BRAND_SUMMARY?.trim() ??
+    "Press Start Chat when you are ready for Becca to join the conversation and guide you through BrewSpot's offerings.",
+  steps:
+    process.env.NEXT_PUBLIC_BRAND_STEPS?.split("|")
+      .map((step) => step.trim())
+      .filter(Boolean) ?? [
+      "Press Start Chat when you're ready for Becca to join the conversation and guide you.",
+      "Ask Becca about BrewSpot's menu, programs, or events to get tailored insights.",
+      "Use the recommendations to plan your next cafe experience.",
+    ],
+};
+
+export default function InteractiveAvatarWrapper({
+  branding,
+}: InteractiveAvatarWrapperProps) {
+  const resolvedBranding = branding ?? DEFAULT_BRANDING;
+
   return (
     <StreamingAvatarProvider
       basePath={
         process.env.NEXT_PUBLIC_BASE_API_URL ?? DEFAULT_HEYGEN_BASE_URL
       }
     >
-      <InteractiveAvatar />
+      <InteractiveAvatar branding={resolvedBranding} />
     </StreamingAvatarProvider>
   );
 }
