@@ -156,16 +156,16 @@ function InteractiveAvatar() {
       <div className="relative w-full overflow-hidden rounded-3xl border border-[#d4c2b2] bg-[#fffaf3] shadow-[0_24px_80px_rgba(93,67,43,0.15)]">
         <div className="aspect-video w-full">
           {isInactive ? (
-            <div className="flex h-full w-full flex-col items-center justify-center gap-8 bg-[#f7efe5] px-10 py-12 text-center md:flex-row md:items-center md:justify-between md:text-left">
-              <div className="flex shrink-0 items-center justify-center">
+            <div className="flex h-full w-full flex-col gap-8 bg-[#f7efe5] px-10 py-12 text-center md:flex-row md:items-center md:justify-between md:gap-12 md:text-left">
+              <div className="flex w-full items-center justify-center md:w-1/2">
                 <img
                   src={logoSrc}
                   alt={`${title} logo`}
                   referrerPolicy="no-referrer"
-                  className="h-40 w-auto max-w-[320px] drop-shadow-lg md:h-48"
+                  className="h-52 w-auto max-w-[340px] drop-shadow-lg md:h-56"
                 />
               </div>
-              <div className="flex max-w-xl flex-col items-center gap-4 text-[#704c35] md:items-start">
+              <div className="flex w-full flex-col items-center gap-4 text-[#704c35] md:w-1/2 md:items-start">
                 <p className="text-2xl font-semibold">{title}</p>
                 <p className="text-base text-[#87614a]">{description}</p>
                 {instructions.length > 0 && (
