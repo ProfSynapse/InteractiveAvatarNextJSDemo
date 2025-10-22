@@ -162,7 +162,7 @@ function InteractiveAvatar() {
                   src={logoSrc}
                   alt={`${title} logo`}
                   referrerPolicy="no-referrer"
-                  className="h-52 w-auto max-w-[340px] drop-shadow-lg md:h-56"
+                  className="h-72 w-auto max-w-[420px] drop-shadow-lg md:h-80"
                 />
               </div>
               <div className="flex w-full flex-col items-center gap-4 text-[#704c35] md:w-1/2 md:items-start">
