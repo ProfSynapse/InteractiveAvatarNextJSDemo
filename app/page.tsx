@@ -3,11 +3,19 @@
 import InteractiveAvatar from "@/components/InteractiveAvatar";
 export default function App() {
   return (
-    <div className="w-screen h-screen flex flex-col">
-      <div className="w-[900px] flex flex-col items-start justify-start gap-5 mx-auto pt-4 pb-20">
-        <div className="w-full">
-          <InteractiveAvatar />
-        </div>
+    <div className="flex min-h-screen w-full flex-col items-center justify-center bg-gradient-to-b from-[#f8f2ea] via-[#f1e6d8] to-[#e9dbc8] px-6 py-12">
+      <div className="flex w-full max-w-4xl flex-col items-center gap-8 text-center">
+        <img
+          src="https://49607860.fs1.hubspotusercontent-na1.net/hubfs/49607860/BrewSpot%20Collateral/brewspot%20logo.png"
+          alt="BrewSpot logo"
+          className="h-16 w-auto drop-shadow-md"
+        />
+        <p className="max-w-2xl text-lg text-[#4a2f22]">
+          BrewSpot Becca is the resident coffee curator, here to help you explore
+          the BrewSpot platform, share product insights, and plan unforgettable
+          cafe experiences.
+        </p>
+        <InteractiveAvatar />
       </div>
     </div>
   );

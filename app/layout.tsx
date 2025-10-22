@@ -2,8 +2,6 @@ import "@/styles/globals.css";
 import { Metadata } from "next";
 import { Fira_Code as FontMono, Inter as FontSans } from "next/font/google";
 
-import NavBar from "@/components/NavBar";
-
 const fontSans = FontSans({
   subsets: ["latin"],
   variable: "--font-sans",
@@ -36,11 +34,8 @@ export default function RootLayout({
       lang="en"
     >
       <head />
-      <body className="min-h-screen bg-black text-white">
-        <main className="relative flex flex-col gap-6 h-screen w-screen">
-          <NavBar />
-          {children}
-        </main>
+      <body className="min-h-screen bg-[#f3eee7] text-[#3f2a20]">
+        <main className="relative flex flex-col h-screen w-screen">{children}</main>
       </body>
     </html>
   );

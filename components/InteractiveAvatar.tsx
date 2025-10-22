@@ -11,14 +11,11 @@ import { useEffect, useRef, useState } from "react";
 import { useMemoizedFn, useUnmount } from "ahooks";
 
 import { Button } from "./Button";
-import { AvatarConfig } from "./AvatarConfig";
 import { AvatarVideo } from "./AvatarSession/AvatarVideo";
 import { useStreamingAvatarSession } from "./logic/useStreamingAvatarSession";
-import { AvatarControls } from "./AvatarSession/AvatarControls";
 import { useVoiceChat } from "./logic/useVoiceChat";
 import { StreamingAvatarProvider, StreamingAvatarSessionState } from "./logic";
 import { LoadingIcon } from "./Icons";
-import { MessageHistory } from "./AvatarSession/MessageHistory";
 
 import { AVATARS } from "@/app/lib/constants";
 
@@ -45,7 +42,7 @@ function InteractiveAvatar() {
     useStreamingAvatarSession();
   const { startVoiceChat } = useVoiceChat();
 
-  const [config, setConfig] = useState<StartAvatarRequest>(DEFAULT_CONFIG);
+  const [config] = useState<StartAvatarRequest>(DEFAULT_CONFIG);
 
   const mediaStream = useRef<HTMLVideoElement>(null);
 
@@ -124,36 +121,53 @@ function InteractiveAvatar() {
     }
   }, [mediaStream, stream]);
 
+  const isInactive = sessionState === StreamingAvatarSessionState.INACTIVE;
+  const isConnecting = sessionState === StreamingAvatarSessionState.CONNECTING;
+  const isConnected = sessionState === StreamingAvatarSessionState.CONNECTED;
+
   return (
-    <div className="w-full flex flex-col gap-4">
-      <div className="flex flex-col rounded-xl bg-zinc-900 overflow-hidden">
-        <div className="relative w-full aspect-video overflow-hidden flex flex-col items-center justify-center">
-          {sessionState !== StreamingAvatarSessionState.INACTIVE ? (
-            <AvatarVideo ref={mediaStream} />
-          ) : (
-            <AvatarConfig config={config} onConfigChange={setConfig} />
-          )}
-        </div>
-        <div className="flex flex-col gap-3 items-center justify-center p-4 border-t border-zinc-700 w-full">
-          {sessionState === StreamingAvatarSessionState.CONNECTED ? (
-            <AvatarControls />
-          ) : sessionState === StreamingAvatarSessionState.INACTIVE ? (
-            <div className="flex flex-row gap-4">
-              <Button onClick={() => startSessionV2(true)}>
-                Start Voice Chat
-              </Button>
-              <Button onClick={() => startSessionV2(false)}>
-                Start Text Chat
-              </Button>
+    <div className="flex w-full flex-col items-center gap-6 text-[#4a2f22]">
+      <div className="relative w-full overflow-hidden rounded-3xl border border-[#d4c2b2] bg-[#fffaf3] shadow-[0_24px_80px_rgba(93,67,43,0.15)]">
+        <div className="aspect-video w-full">
+          {isInactive ? (
+            <div className="flex h-full w-full flex-col items-center justify-center gap-4 bg-[#f7efe5] px-10 text-center">
+              <p className="text-2xl font-semibold text-[#704c35]">
+                Meet BrewSpot Becca
+              </p>
+              <p className="max-w-md text-base text-[#87614a]">
+                Press Start Chat when you are ready for Becca to join the
+                conversation and guide you through BrewSpot&apos;s offerings.
+              </p>
             </div>
           ) : (
-            <LoadingIcon />
+            <AvatarVideo ref={mediaStream} />
           )}
         </div>
+        {isConnecting && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[#f3e7da]/80 backdrop-blur-sm">
+            <LoadingIcon size={48} className="text-[#b87241]" />
+            <p className="text-sm text-[#7a553d]">
+              Warming up the espresso machine…
+            </p>
+          </div>
+        )}
       </div>
-      {sessionState === StreamingAvatarSessionState.CONNECTED && (
-        <MessageHistory />
-      )}
+      <div className="flex flex-wrap items-center justify-center gap-4">
+        <Button
+          onClick={() => startSessionV2(true)}
+          disabled={!isInactive}
+          className="shadow-[0_10px_25px_rgba(131,88,49,0.3)]"
+        >
+          Start Chat
+        </Button>
+        <Button
+          onClick={stopAvatar}
+          disabled={!isConnected && !isConnecting}
+          className="!bg-[#f0e2d2] !text-[#6b4632] hover:!bg-[#e5d3c1] !border !border-[#d1baa4]"
+        >
+          End Chat
+        </Button>
+      </div>
     </div>
   );
 }

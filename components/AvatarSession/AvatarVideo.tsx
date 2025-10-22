@@ -4,11 +4,9 @@ import { ConnectionQuality } from "@heygen/streaming-avatar";
 import { useConnectionQuality } from "../logic/useConnectionQuality";
 import { useStreamingAvatarSession } from "../logic/useStreamingAvatarSession";
 import { StreamingAvatarSessionState } from "../logic";
-import { CloseIcon } from "../Icons";
-import { Button } from "../Button";
 
 export const AvatarVideo = forwardRef<HTMLVideoElement>(({}, ref) => {
-  const { sessionState, stopAvatar } = useStreamingAvatarSession();
+  const { sessionState } = useStreamingAvatarSession();
   const { connectionQuality } = useConnectionQuality();
 
   const isLoaded = sessionState === StreamingAvatarSessionState.CONNECTED;
@@ -16,17 +14,9 @@ export const AvatarVideo = forwardRef<HTMLVideoElement>(({}, ref) => {
   return (
     <>
       {connectionQuality !== ConnectionQuality.UNKNOWN && (
-        <div className="absolute top-3 left-3 bg-black text-white rounded-lg px-3 py-2">
+        <div className="absolute top-4 left-4 rounded-full border border-[#d9c7b5] bg-[#f7ede1]/90 px-4 py-1 text-xs uppercase tracking-wide text-[#7a553d] shadow-sm">
           Connection Quality: {connectionQuality}
         </div>
-      )}
-      {isLoaded && (
-        <Button
-          className="absolute top-3 right-3 !p-2 bg-zinc-700 bg-opacity-50 z-10"
-          onClick={stopAvatar}
-        >
-          <CloseIcon />
-        </Button>
       )}
       <video
         ref={ref}
@@ -35,14 +25,14 @@ export const AvatarVideo = forwardRef<HTMLVideoElement>(({}, ref) => {
         style={{
           width: "100%",
           height: "100%",
-          objectFit: "contain",
+          objectFit: "cover",
         }}
       >
         <track kind="captions" />
       </video>
       {!isLoaded && (
-        <div className="w-full h-full flex items-center justify-center absolute top-0 left-0">
-          Loading...
+        <div className="absolute inset-0 flex items-center justify-center bg-[#f7efe5] text-[#7a553d]">
+          Preparing Becca&apos;s stage…
         </div>
       )}
     </>
