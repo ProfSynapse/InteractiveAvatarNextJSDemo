@@ -72,82 +72,39 @@ export function generateTranscriptPDF(
   messages: Message[],
   metadata?: TranscriptMetadata
 ) {
-  const margin = 20;
+  const topMargin = 30;
+  const bottomMargin = 30;
+  const sideMargin = 20;
   const pageWidth = 210; // Standard A4 width in mm
-  const maxWidth = pageWidth - margin * 2;
+  const pageHeight = 297; // Standard A4 height in mm
+  const maxWidth = pageWidth - sideMargin * 2;
+  const maxYPosition = pageHeight - bottomMargin;
 
-  // Create a temporary PDF to measure content accurately
-  const tempPdf = new jsPDF({
+  const pdf = new jsPDF({
     unit: 'mm',
     format: 'a4'
   });
 
-  // Pre-calculate exact height needed
-  let calculatedHeight = margin; // Start with top margin
+  let yPosition = topMargin;
 
-  // Header
-  tempPdf.setFontSize(20);
-  calculatedHeight += 12;
+  // Function to check if we need a new page and add one if necessary
+  const checkPageBreak = (requiredSpace: number, isHeading: boolean = false) => {
+    // For headings, require extra space (at least 2-3 lines of content after)
+    const minimumContentSpace = isHeading ? 15 : 0;
+    const totalRequiredSpace = requiredSpace + minimumContentSpace;
 
-  // Metadata
-  tempPdf.setFontSize(10);
-  if (metadata?.sessionDate) calculatedHeight += 6;
-  if (metadata?.sessionDuration) calculatedHeight += 6;
-  if (metadata?.avatarName) calculatedHeight += 6;
-  calculatedHeight += 4 + 10; // separator line + spacing
-
-  // Feedback section
-  if (metadata?.feedback) {
-    const feedbackLines = metadata.feedback.split('\n');
-    for (const line of feedbackLines) {
-      if (line.trim().startsWith('|')) {
-        calculatedHeight += 15; // Row height estimate
-      } else if (line.startsWith('# ')) {
-        calculatedHeight += 10;
-      } else if (line.startsWith('## ')) {
-        calculatedHeight += 8;
-      } else if (line.trim() === '---') {
-        calculatedHeight += 8;
-      } else if (line.trim()) {
-        calculatedHeight += 6;
-      } else {
-        calculatedHeight += 3;
-      }
+    if (yPosition + totalRequiredSpace > maxYPosition) {
+      pdf.addPage();
+      yPosition = topMargin;
+      return true;
     }
-    calculatedHeight += 14; // separator + header
-  }
-
-  // Messages
-  tempPdf.setFontSize(10);
-  messages.forEach((message) => {
-    calculatedHeight += 6; // sender label
-    const lines = tempPdf.splitTextToSize(message.content, maxWidth);
-    calculatedHeight += lines.length * 5; // content lines
-    calculatedHeight += 6; // spacing
-  });
-
-  // Footer
-  calculatedHeight += 30;
-
-  // Create actual PDF with calculated height (add 10% safety buffer)
-  const pageHeight = Math.max(297, calculatedHeight * 1.1);
-
-  const pdf = new jsPDF({
-    unit: 'mm',
-    format: [pageWidth, pageHeight]
-  });
-
-  let yPosition = margin;
-
-  // Dummy function - no page breaks in continuous mode
-  const checkPageBreak = (requiredSpace: number) => {
     return false;
   };
 
   // Add header
   pdf.setFontSize(20);
   pdf.setFont("helvetica", "bold");
-  pdf.text("BrewSpot Becca Conversation Transcript", margin, yPosition);
+  pdf.text("BrewSpot Becca Conversation Transcript", sideMargin, yPosition);
   yPosition += 12;
 
   // Add metadata
@@ -156,24 +113,24 @@ export function generateTranscriptPDF(
   pdf.setTextColor(100, 100, 100);
 
   if (metadata?.sessionDate) {
-    pdf.text(`Session Date: ${metadata.sessionDate}`, margin, yPosition);
+    pdf.text(`Session Date: ${metadata.sessionDate}`, sideMargin, yPosition);
     yPosition += 6;
   }
 
   if (metadata?.sessionDuration) {
-    pdf.text(`Duration: ${metadata.sessionDuration}`, margin, yPosition);
+    pdf.text(`Duration: ${metadata.sessionDuration}`, sideMargin, yPosition);
     yPosition += 6;
   }
 
   if (metadata?.avatarName) {
-    pdf.text(`Avatar: ${metadata.avatarName}`, margin, yPosition);
+    pdf.text(`Avatar: ${metadata.avatarName}`, sideMargin, yPosition);
     yPosition += 6;
   }
 
   // Add separator line
   yPosition += 4;
   pdf.setDrawColor(200, 200, 200);
-  pdf.line(margin, yPosition, pageWidth - margin, yPosition);
+  pdf.line(sideMargin, yPosition, pageWidth - sideMargin, yPosition);
   yPosition += 10;
 
   // Reset text color for messages
@@ -201,7 +158,7 @@ export function generateTranscriptPDF(
       if (line.trim() === '---') {
         checkPageBreak(8);
         pdf.setDrawColor(200, 200, 200);
-        pdf.line(margin, yPosition, pageWidth - margin, yPosition);
+        pdf.line(sideMargin, yPosition, pageWidth - sideMargin, yPosition);
         yPosition += 8;
         i++;
         continue;
@@ -209,36 +166,36 @@ export function generateTranscriptPDF(
 
       // Check for headers
       if (line.startsWith('# ')) {
-        checkPageBreak(12);
+        checkPageBreak(12, true); // true indicates this is a heading
         pdf.setFontSize(16);
         pdf.setFont("helvetica", "bold");
         pdf.setTextColor(184, 114, 65); // Coffee brown
         const text = line.replace(/^#\s+/, '');
-        pdf.text(text, margin, yPosition);
+        pdf.text(text, sideMargin, yPosition);
         yPosition += 10;
         i++;
         continue;
       }
 
       if (line.startsWith('## ')) {
-        checkPageBreak(10);
+        checkPageBreak(10, true); // true indicates this is a heading
         pdf.setFontSize(13);
         pdf.setFont("helvetica", "bold");
         pdf.setTextColor(50, 50, 50);
         const text = line.replace(/^##\s+/, '');
-        pdf.text(text, margin, yPosition);
+        pdf.text(text, sideMargin, yPosition);
         yPosition += 8;
         i++;
         continue;
       }
 
       if (line.startsWith('### ')) {
-        checkPageBreak(9);
+        checkPageBreak(9, true); // true indicates this is a heading
         pdf.setFontSize(11);
         pdf.setFont("helvetica", "bold");
         pdf.setTextColor(80, 80, 80);
         const text = line.replace(/^###\s+/, '');
-        pdf.text(text, margin, yPosition);
+        pdf.text(text, sideMargin, yPosition);
         yPosition += 7;
         i++;
         continue;
@@ -254,9 +211,9 @@ export function generateTranscriptPDF(
         const segments = parseMarkdownFormatting(text);
 
         // Render bullet point
-        pdf.text('•', margin + 5, yPosition);
+        pdf.text('•', sideMargin + 5, yPosition);
 
-        let xOffset = margin + 12;
+        let xOffset = sideMargin + 12;
         let currentLine = '';
 
         segments.forEach((segment, idx) => {
@@ -278,7 +235,7 @@ export function generateTranscriptPDF(
               yPosition += 5;
               checkPageBreak(5);
               currentLine = word;
-              xOffset = margin + 12; // Indent continuation
+              xOffset = sideMargin + 12; // Indent continuation
             } else {
               currentLine = testLine;
             }
@@ -302,144 +259,6 @@ export function generateTranscriptPDF(
         continue;
       }
 
-      // Check if this is the start of a table
-      if (line.trim().startsWith('|')) {
-        const tableRows: string[] = [];
-
-        // Collect all consecutive table rows
-        while (i < feedbackLines.length && feedbackLines[i].trim().startsWith('|')) {
-          tableRows.push(feedbackLines[i]);
-          i++;
-        }
-
-        // Parse and render table
-        if (tableRows.length >= 2) {
-          const headerRow = tableRows[0].split('|').map(cell => cell.trim()).filter(cell => cell);
-          const dataRows = tableRows.slice(2).map(row =>
-            row.split('|').map(cell => cell.trim()).filter(cell => cell)
-          );
-
-          // Calculate column widths
-          const numCols = headerRow.length;
-          const colWidth = (maxWidth - 5) / numCols;
-
-          checkPageBreak(15 + dataRows.length * 12);
-
-          // Track table start position for border drawing
-          const tableStartY = yPosition - 5;
-
-          // Draw header
-          pdf.setFontSize(9);
-          pdf.setFont("helvetica", "bold");
-          pdf.setTextColor(0, 0, 0); // Black text for table
-          pdf.setFillColor(240, 235, 225);
-          pdf.rect(margin, tableStartY, maxWidth, 10, 'F');
-
-          headerRow.forEach((header, idx) => {
-            const xPos = margin + 2 + (idx * colWidth);
-            const segments = parseMarkdownFormatting(header);
-            let xOffset = xPos;
-
-            segments.forEach(segment => {
-              const fontStyle = segment.bold && segment.italic ? "bolditalic" :
-                               segment.bold ? "bold" :
-                               segment.italic ? "italic" : "bold";
-              pdf.setFont("helvetica", fontStyle);
-              pdf.text(segment.text, xOffset, yPosition, { maxWidth: colWidth - 4 });
-              xOffset += pdf.getTextWidth(segment.text);
-            });
-          });
-
-          yPosition += 10;
-
-          // Draw data rows
-          pdf.setFont("helvetica", "normal");
-          pdf.setFontSize(8);
-          pdf.setTextColor(0, 0, 0); // Black text for table data
-
-          const rowYPositions: number[] = []; // Track Y positions for horizontal lines
-
-          dataRows.forEach((row, rowIdx) => {
-            const rowHeight = Math.max(15, ...row.map(cell => {
-              const lines = pdf.splitTextToSize(cell, colWidth - 4);
-              return lines.length * 4 + 6;
-            }));
-
-            checkPageBreak(rowHeight + 5);
-
-            // Track row start position
-            rowYPositions.push(yPosition - 3);
-
-            // Alternate row coloring
-            if (rowIdx % 2 === 0) {
-              pdf.setFillColor(252, 250, 245);
-              pdf.rect(margin, yPosition - 3, maxWidth, rowHeight, 'F');
-            }
-
-            row.forEach((cell, colIdx) => {
-              const xPos = margin + 2 + (colIdx * colWidth);
-              const segments = parseMarkdownFormatting(cell);
-              let currentY = yPosition;
-              let currentX = xPos;
-              let currentLineText = '';
-
-              segments.forEach(segment => {
-                const fontStyle = segment.bold && segment.italic ? "bolditalic" :
-                                 segment.bold ? "bold" :
-                                 segment.italic ? "italic" : "normal";
-                pdf.setFont("helvetica", fontStyle);
-
-                const words = segment.text.split(' ');
-                words.forEach(word => {
-                  const testText = currentLineText + (currentLineText ? ' ' : '') + word;
-                  const testWidth = pdf.getTextWidth(testText);
-
-                  if (testWidth > colWidth - 4 && currentLineText) {
-                    pdf.text(currentLineText, currentX, currentY);
-                    currentY += 4;
-                    currentLineText = word;
-                    currentX = xPos;
-                  } else {
-                    currentLineText = testText;
-                  }
-                });
-              });
-
-              if (currentLineText) {
-                pdf.text(currentLineText, currentX, currentY);
-              }
-            });
-
-            yPosition += rowHeight;
-          });
-
-          // Calculate actual table height and draw borders
-          const totalTableHeight = yPosition - tableStartY;
-          pdf.setDrawColor(220, 210, 200);
-          pdf.setLineWidth(0.5);
-
-          // Draw outer border
-          pdf.rect(margin, tableStartY, maxWidth, totalTableHeight);
-
-          // Draw horizontal line after header
-          pdf.line(margin, tableStartY + 10, margin + maxWidth, tableStartY + 10);
-
-          // Draw horizontal lines between rows
-          rowYPositions.forEach((rowY) => {
-            pdf.line(margin, rowY, margin + maxWidth, rowY);
-          });
-
-          // Draw column separators
-          for (let col = 1; col < numCols; col++) {
-            const xPos = margin + (col * colWidth);
-            pdf.line(xPos, tableStartY, xPos, yPosition);
-          }
-
-          yPosition += 8;
-        }
-        i++; // Move past the table
-        continue;
-      }
 
       // Regular paragraph text (default case)
       checkPageBreak(8);
@@ -449,7 +268,7 @@ export function generateTranscriptPDF(
       const text = line.trim();
       const segments = parseMarkdownFormatting(text);
 
-      let currentX = margin;
+      let currentX = sideMargin;
       let currentLine = '';
 
       segments.forEach((segment, segIdx) => {
@@ -465,13 +284,13 @@ export function generateTranscriptPDF(
           const testText = currentLine + separator + word;
           const testWidth = pdf.getTextWidth(testText);
 
-          if (currentX - margin + testWidth > maxWidth && currentLine) {
+          if (currentX - sideMargin + testWidth > maxWidth && currentLine) {
             // Line is full, print current line and start new one
             pdf.text(currentLine, currentX, yPosition);
             yPosition += 5;
             checkPageBreak(5);
             currentLine = word;
-            currentX = margin;
+            currentX = sideMargin;
           } else {
             currentLine = testText;
           }
@@ -498,14 +317,15 @@ export function generateTranscriptPDF(
     yPosition += 4;
     checkPageBreak(10);
     pdf.setDrawColor(200, 200, 200);
-    pdf.line(margin, yPosition, pageWidth - margin, yPosition);
+    pdf.line(sideMargin, yPosition, pageWidth - sideMargin, yPosition);
     yPosition += 10;
 
     // Add "Conversation Transcript" header
+    checkPageBreak(10, true); // Avoid orphan heading
     pdf.setFontSize(16);
     pdf.setFont("helvetica", "bold");
     pdf.setTextColor(0, 0, 0);
-    pdf.text("Conversation Transcript", margin, yPosition);
+    pdf.text("Conversation Transcript", sideMargin, yPosition);
     yPosition += 10;
   }
 
@@ -528,7 +348,7 @@ export function generateTranscriptPDF(
       pdf.setTextColor(184, 114, 65);
     }
 
-    pdf.text(senderLabel + ":", margin, yPosition);
+    pdf.text(senderLabel + ":", sideMargin, yPosition);
     yPosition += 6;
 
     // Add message content
@@ -540,7 +360,7 @@ export function generateTranscriptPDF(
 
     lines.forEach((line: string) => {
       checkPageBreak(6);
-      pdf.text(line, margin + 5, yPosition);
+      pdf.text(line, sideMargin + 5, yPosition);
       yPosition += 5;
     });
 

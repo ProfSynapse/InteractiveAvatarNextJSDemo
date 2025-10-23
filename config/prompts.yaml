@@ -189,17 +189,69 @@ evaluation_rubric:
 
     # Discovery Call Evaluation
 
-    | Criterion | What Went Well | Areas for Improvement | Score |
-    |-----------|----------------|----------------------|-------|
-    | Product & Service Exploration | [Specific positive example from conversation] | [Specific actionable suggestion] | X/10 |
-    | Target Audience Understanding | [Specific positive example from conversation] | [Specific actionable suggestion] | X/15 |
-    | Marketing Channels Assessment | [Specific positive example from conversation] | [Specific actionable suggestion] | X/15 |
-    | Campaign Goals Identification | [Specific positive example from conversation] | [Specific actionable suggestion] | X/15 |
-    | Challenges & Pain Points Discovery | [Specific positive example from conversation] | [Specific actionable suggestion] | X/15 |
-    | Brand Assets Identification | [Specific positive example from conversation] | [Specific actionable suggestion] | X/15 |
-    | Data & Analytics Access | [Specific positive example from conversation] | [Specific actionable suggestion] | X/15 |
-    | **TOTAL** | | | **X/100** |
+    ## Product & Service Exploration
+    **What Went Well:** [Specific positive example from conversation]
 
-    ## Key Takeaway
+    **Areas for Improvement:** [Specific actionable suggestion]
 
-    [One main insight or lesson from this practice session - 2-3 sentences]
+    **Score:** X/10
+
+    ---
+
+    ## Target Audience Understanding
+    **What Went Well:** [Specific positive example from conversation]
+
+    **Areas for Improvement:** [Specific actionable suggestion]
+
+    **Score:** X/15
+
+    ---
+
+    ## Marketing Channels Assessment
+    **What Went Well:** [Specific positive example from conversation]
+
+    **Areas for Improvement:** [Specific actionable suggestion]
+
+    **Score:** X/15
+
+    ---
+
+    ## Campaign Goals Identification
+    **What Went Well:** [Specific positive example from conversation]
+
+    **Areas for Improvement:** [Specific actionable suggestion]
+
+    **Score:** X/15
+
+    ---
+
+    ## Challenges & Pain Points Discovery
+    **What Went Well:** [Specific positive example from conversation]
+
+    **Areas for Improvement:** [Specific actionable suggestion]
+
+    **Score:** X/15
+
+    ---
+
+    ## Brand Assets Identification
+    **What Went Well:** [Specific positive example from conversation]
+
+    **Areas for Improvement:** [Specific actionable suggestion]
+
+    **Score:** X/15
+
+    ---
+
+    ## Data & Analytics Access
+    **What Went Well:** [Specific positive example from conversation]
+
+    **Areas for Improvement:** [Specific actionable suggestion]
+
+    **Score:** X/15
+
+    ---
+
+    # Final Thoughts - X/100
+
+    [One main insight or lesson from this practice session - 2-3 sentences summarizing overall performance and key areas to focus on for improvement]

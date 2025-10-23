@@ -43,7 +43,14 @@ export function loadPromptsConfig(): PromptsConfig {
 
 export function getPromptConfig(promptId: string): AvatarPromptConfig | null {
   const config = loadPromptsConfig();
-  return config[promptId] || null;
+  const promptConfig = config[promptId];
+
+  // Type guard: ensure it's an AvatarPromptConfig, not EvaluationRubricConfig
+  if (promptConfig && 'avatar_id' in promptConfig && 'system_prompt' in promptConfig) {
+    return promptConfig as AvatarPromptConfig;
+  }
+
+  return null;
 }
 
 export function getAllPromptIds(): string[] {
