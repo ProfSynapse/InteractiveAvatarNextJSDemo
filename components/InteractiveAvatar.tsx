@@ -16,10 +16,12 @@ import { Button } from "./Button";
 import { AvatarVideo } from "./AvatarSession/AvatarVideo";
 import { useStreamingAvatarSession } from "./logic/useStreamingAvatarSession";
 import { useVoiceChat } from "./logic/useVoiceChat";
+import { useMessageHistory } from "./logic/useMessageHistory";
 import { StreamingAvatarProvider, StreamingAvatarSessionState } from "./logic";
 import { LoadingIcon } from "./Icons";
 
 import { AVATARS } from "@/app/lib/constants";
+import { downloadTranscriptPDF } from "@/app/lib/transcriptGenerator";
 
 const ENV_AVATAR_ID = process.env.NEXT_PUBLIC_HEYGEN_AVATAR_ID?.trim();
 const ENV_KNOWLEDGE_BASE_ID =
@@ -69,9 +71,13 @@ function InteractiveAvatar() {
   const { initAvatar, startAvatar, stopAvatar, sessionState, stream } =
     useStreamingAvatarSession();
   const { startVoiceChat } = useVoiceChat();
+  const { messages } = useMessageHistory();
 
   const [config, setConfig] = useState<StartAvatarRequest>(DEFAULT_CONFIG);
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
+  const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
+  const [savedMessages, setSavedMessages] = useState<typeof messages>([]);
+  const [hasEndedSession, setHasEndedSession] = useState(false);
 
   const mediaStream = useRef<HTMLVideoElement>(null);
   const sessionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -129,11 +135,41 @@ function InteractiveAvatar() {
   });
 
   const handleStopSession = useMemoizedFn(() => {
+    // Save messages before they get cleared by stopAvatar
+    setSavedMessages([...messages]);
+    setHasEndedSession(true);
     clearSessionTimeout();
     clearSessionInterval();
     setRemainingSeconds(null);
     stopAvatar();
   });
+
+  const handleDownloadPDF = useMemoizedFn(() => {
+    const messagesToDownload = savedMessages.length > 0 ? savedMessages : messages;
+
+    if (messagesToDownload.length === 0) {
+      alert("No conversation to download yet!");
+      return;
+    }
+
+    const sessionDuration = sessionStartTime
+      ? formatDuration(Date.now() - sessionStartTime.getTime())
+      : undefined;
+
+    downloadTranscriptPDF(messagesToDownload, {
+      sessionDate: sessionStartTime?.toLocaleString() || new Date().toLocaleString(),
+      sessionDuration,
+      avatarName: "BrewSpot Becca",
+    });
+  });
+
+  function formatDuration(milliseconds: number): string {
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+
+    return `${minutes}m ${seconds}s`;
+  }
 
   async function fetchAccessToken() {
     try {
@@ -151,8 +187,19 @@ function InteractiveAvatar() {
     }
   }
 
+  const handleNewSession = useMemoizedFn(() => {
+    // Reset to initial state
+    setSavedMessages([]);
+    setHasEndedSession(false);
+    setSessionStartTime(null);
+  });
+
   const startSessionV2 = useMemoizedFn(async (isVoiceChat: boolean) => {
     try {
+      // Clear saved messages when starting a new session
+      setSavedMessages([]);
+      setHasEndedSession(false);
+
       const newToken = await fetchAccessToken();
       const avatar = initAvatar(newToken);
 
@@ -188,6 +235,7 @@ function InteractiveAvatar() {
       });
 
       await startAvatar(config);
+      setSessionStartTime(new Date());
       clearSessionTimeout();
       clearSessionInterval();
       setRemainingSeconds(SESSION_DURATION_SECONDS);
@@ -260,11 +308,15 @@ function InteractiveAvatar() {
   };
   const showTimer = remainingSeconds !== null && !isInactive;
 
+  // Determine which view to show
+  const showPostSessionView = isInactive && hasEndedSession;
+  const showWelcomeView = isInactive && !hasEndedSession;
+
   return (
     <div className="flex w-full flex-col items-center gap-6 text-[#4a2f22]">
       <div className="relative w-full overflow-hidden rounded-3xl border border-[#d4c2b2] bg-[#fffaf3] shadow-[0_24px_80px_rgba(93,67,43,0.15)]">
         <div className="aspect-video w-full">
-          {isInactive ? (
+          {showWelcomeView ? (
             <div className="flex h-full w-full flex-col gap-8 bg-[#f7efe5] px-10 py-12 text-center md:flex-row md:items-center md:justify-between md:gap-12 md:text-left">
               <div className="flex w-full items-center justify-center md:w-1/2">
                 <img
@@ -289,6 +341,37 @@ function InteractiveAvatar() {
                 )}
               </div>
             </div>
+          ) : showPostSessionView ? (
+            <div className="flex h-full w-full flex-col gap-8 bg-[#f7efe5] px-10 py-12 text-center md:flex-row md:items-center md:justify-between md:gap-12 md:text-left">
+              <div className="flex w-full items-center justify-center md:w-1/2">
+                <img
+                  src={logoSrc}
+                  alt={`${title} logo`}
+                  referrerPolicy="no-referrer"
+                  className="h-72 w-auto max-w-[420px] drop-shadow-lg md:h-80"
+                />
+              </div>
+              <div className="flex w-full flex-col items-center gap-6 text-[#704c35] md:w-1/2 md:items-start">
+                <p className="text-2xl font-semibold text-[#704c35]">Great Practice Session!</p>
+                <p className="text-base text-[#87614a]">
+                  You just completed a practice conversation with Becca. Download your transcript to review how you did, or start a new session to practice more.
+                </p>
+                <div className="flex flex-col gap-3 w-full">
+                  <Button
+                    onClick={handleDownloadPDF}
+                    className="w-full !bg-[#b87241] !text-white hover:!bg-[#a0633a] shadow-[0_10px_25px_rgba(131,88,49,0.3)]"
+                  >
+                    Download Transcript
+                  </Button>
+                  <Button
+                    onClick={handleNewSession}
+                    className="w-full !bg-[#704c35] !text-white hover:!bg-[#5d3829] shadow-[0_10px_25px_rgba(93,67,43,0.3)]"
+                  >
+                    Start New Session
+                  </Button>
+                </div>
+              </div>
+            </div>
           ) : (
             <AvatarVideo ref={mediaStream} />
           )}
@@ -302,27 +385,29 @@ function InteractiveAvatar() {
           </div>
         )}
       </div>
-      <div className="flex flex-wrap items-center justify-center gap-4">
-        <Button
-          onClick={() => startSessionV2(true)}
-          disabled={!isInactive}
-          className="shadow-[0_10px_25px_rgba(131,88,49,0.3)]"
-        >
-          Start Chat
-        </Button>
-        <Button
-          onClick={handleStopSession}
-          disabled={!isConnected && !isConnecting}
-          className="!bg-[#f0e2d2] !text-[#6b4632] hover:!bg-[#e5d3c1] !border !border-[#d1baa4]"
-        >
-          End Chat
-        </Button>
-        {showTimer && (
-          <div className="rounded-full border border-[#d4c2b2] bg-[#fffaf3] px-4 py-2 text-sm font-medium text-[#7a553d] shadow-[0_8px_20px_rgba(131,88,49,0.15)]">
-            Auto-ending in {formatTime(remainingSeconds ?? SESSION_DURATION_SECONDS)}
-          </div>
-        )}
-      </div>
+      {!showPostSessionView && (
+        <div className="flex flex-wrap items-center justify-center gap-4">
+          <Button
+            onClick={() => startSessionV2(true)}
+            disabled={!isInactive}
+            className="shadow-[0_10px_25px_rgba(131,88,49,0.3)]"
+          >
+            Start Chat
+          </Button>
+          <Button
+            onClick={handleStopSession}
+            disabled={!isConnected && !isConnecting}
+            className="!bg-[#f0e2d2] !text-[#6b4632] hover:!bg-[#e5d3c1] !border !border-[#d1baa4]"
+          >
+            End Chat
+          </Button>
+          {showTimer && (
+            <div className="rounded-full border border-[#d4c2b2] bg-[#fffaf3] px-4 py-2 text-sm font-medium text-[#7a553d] shadow-[0_8px_20px_rgba(131,88,49,0.15)]">
+              Auto-ending in {formatTime(remainingSeconds ?? SESSION_DURATION_SECONDS)}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
