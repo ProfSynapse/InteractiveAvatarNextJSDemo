@@ -14,8 +14,13 @@ export interface AvatarPromptConfig {
   knowledge_base_id?: string; // Optional: use if you have KB permissions
 }
 
+export interface EvaluationRubricConfig {
+  name: string;
+  prompt: string;
+}
+
 export interface PromptsConfig {
-  [key: string]: AvatarPromptConfig;
+  [key: string]: AvatarPromptConfig | EvaluationRubricConfig;
 }
 
 let cachedConfig: PromptsConfig | null = null;
@@ -44,4 +49,10 @@ export function getPromptConfig(promptId: string): AvatarPromptConfig | null {
 export function getAllPromptIds(): string[] {
   const config = loadPromptsConfig();
   return Object.keys(config);
+}
+
+export function getEvaluationRubric(): string {
+  const config = loadPromptsConfig();
+  const rubricConfig = config['evaluation_rubric'] as EvaluationRubricConfig;
+  return rubricConfig?.prompt || '';
 }

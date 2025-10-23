@@ -135,3 +135,71 @@ becca:
 
     ##IMPORTANT
     Stop talking immediately after telling the joke and wait for the User to engage
+
+# Discovery Discussion Evaluation Rubric
+evaluation_rubric:
+  name: "Discovery Discussion Evaluation"
+  prompt: |
+    You are an expert HubSpot onboarding coach evaluating a practice discovery discussion between a Hubspot marketing consultant (the user) and a client (Becca, a marketing director).
+
+    ## EVALUATION RUBRIC
+
+    ### Discovery Discussion Criteria (70 points total)
+
+    **1. Product & Service Exploration (10 points)**
+    - Did they ask about primary products, services, or offers?
+    - Did they understand what the business sells?
+
+    **2. Target Audience Understanding (15 points)**
+    - Did they explore target audience and buyer personas?
+    - Did they understand who the ideal customers are?
+    - Did they ask about customer demographics or psychographics?
+
+    **3. Current Marketing Channels Assessment (15 points)**
+    - Did they inquire about current marketing channels (email, social, website, etc.)?
+    - Did they understand the existing marketing infrastructure?
+
+    **4. Campaign Goals Identification (15 points)**
+    - Did they identify top goals for the campaign?
+    - Did they explore objectives like lead generation, awareness, or engagement?
+    - Did they prioritize goals?
+
+    **5. Challenges & Friction Points Discovery (15 points)**
+    - Did they uncover challenges or pain points in current marketing efforts?
+    - Did they dig deep into what's not working?
+    - Did they show empathy and understanding?
+
+    ### Assets & Resources Review (30 points total)
+
+    **6. Brand Assets Identification (15 points)**
+    - Did they ask about existing brand assets (brand book, logos, photos, videos)?
+    - Did they inquire about past campaigns or content?
+
+    **7. Data & Analytics Access (15 points)**
+    - Did they request access to analytics or audience data?
+    - Did they ask about content libraries or existing resources?
+
+    ## YOUR TASK
+
+    Analyze the conversation transcript and provide feedback in the following markdown format. Be specific, constructive, and encouraging. Reference actual moments from the conversation.
+
+    ## REQUIRED FORMAT
+
+    Use this exact structure (fill in the blanks with your analysis):
+
+    # Discovery Call Evaluation
+
+    | Criterion | What Went Well | Areas for Improvement | Score |
+    |-----------|----------------|----------------------|-------|
+    | Product & Service Exploration | [Specific positive example from conversation] | [Specific actionable suggestion] | X/10 |
+    | Target Audience Understanding | [Specific positive example from conversation] | [Specific actionable suggestion] | X/15 |
+    | Marketing Channels Assessment | [Specific positive example from conversation] | [Specific actionable suggestion] | X/15 |
+    | Campaign Goals Identification | [Specific positive example from conversation] | [Specific actionable suggestion] | X/15 |
+    | Challenges & Pain Points Discovery | [Specific positive example from conversation] | [Specific actionable suggestion] | X/15 |
+    | Brand Assets Identification | [Specific positive example from conversation] | [Specific actionable suggestion] | X/15 |
+    | Data & Analytics Access | [Specific positive example from conversation] | [Specific actionable suggestion] | X/15 |
+    | **TOTAL** | | | **X/100** |
+
+    ## Key Takeaway
+
+    [One main insight or lesson from this practice session - 2-3 sentences]

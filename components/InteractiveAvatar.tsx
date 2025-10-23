@@ -17,7 +17,7 @@ import { AvatarVideo } from "./AvatarSession/AvatarVideo";
 import { useStreamingAvatarSession } from "./logic/useStreamingAvatarSession";
 import { useVoiceChat } from "./logic/useVoiceChat";
 import { useMessageHistory } from "./logic/useMessageHistory";
-import { StreamingAvatarProvider, StreamingAvatarSessionState } from "./logic";
+import { MessageSender, StreamingAvatarProvider, StreamingAvatarSessionState } from "./logic";
 import { LoadingIcon } from "./Icons";
 
 import { AVATARS } from "@/app/lib/constants";
@@ -76,8 +76,11 @@ function InteractiveAvatar() {
   const [config, setConfig] = useState<StartAvatarRequest>(DEFAULT_CONFIG);
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
+  const [sessionEndTime, setSessionEndTime] = useState<Date | null>(null);
   const [savedMessages, setSavedMessages] = useState<typeof messages>([]);
   const [hasEndedSession, setHasEndedSession] = useState(false);
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const [isGeneratingFeedback, setIsGeneratingFeedback] = useState(false);
 
   const mediaStream = useRef<HTMLVideoElement>(null);
   const sessionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -104,13 +107,6 @@ function InteractiveAvatar() {
               emotion: (promptConfig.voice?.emotion?.toUpperCase() as VoiceEmotion) || prev.voice?.emotion,
             },
           }));
-          
-          console.log('✅ Loaded configuration from YAML:');
-          console.log('   Name:', promptConfig.name);
-          console.log('   Avatar ID:', promptConfig.avatar_id);
-          console.log('   Voice Rate:', promptConfig.voice?.rate);
-          console.log('   Voice Emotion:', promptConfig.voice?.emotion);
-          console.log('   System Prompt Length:', promptConfig.system_prompt?.length, 'characters');
         }
       } catch (error) {
         console.error('❌ Failed to load system prompt:', error);
@@ -134,14 +130,67 @@ function InteractiveAvatar() {
     }
   });
 
-  const handleStopSession = useMemoizedFn(() => {
+  const generateFeedback = useMemoizedFn(async (conversationMessages: typeof messages) => {
+    if (conversationMessages.length === 0) {
+      console.log("No messages to analyze");
+      return null;
+    }
+
+    setIsGeneratingFeedback(true);
+
+    try {
+      // Format messages for the API
+      const transcript = conversationMessages.map(msg => ({
+        role: msg.sender === MessageSender.AVATAR ? "assistant" as const : "user" as const,
+        content: msg.content
+      }));
+
+      const response = await fetch("/api/analyze-transcript", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ transcript }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Failed to generate feedback:", errorData);
+        return null;
+      }
+
+      const data = await response.json();
+      console.log("Feedback generated successfully");
+      return data.feedback;
+    } catch (error) {
+      console.error("Error generating feedback:", error);
+      return null;
+    } finally {
+      setIsGeneratingFeedback(false);
+    }
+  });
+
+  const handleStopSession = useMemoizedFn(async () => {
+    // Capture the exact end time for duration calculation
+    const endTime = new Date();
+    setSessionEndTime(endTime);
+
     // Save messages before they get cleared by stopAvatar
-    setSavedMessages([...messages]);
-    setHasEndedSession(true);
+    const currentMessages = [...messages];
+    setSavedMessages(currentMessages);
     clearSessionTimeout();
     clearSessionInterval();
     setRemainingSeconds(null);
     stopAvatar();
+
+    // Generate feedback - keep loading state active until complete
+    const generatedFeedback = await generateFeedback(currentMessages);
+    if (generatedFeedback) {
+      setFeedback(generatedFeedback);
+    }
+
+    // Only show post-session view after feedback is ready
+    setHasEndedSession(true);
   });
 
   const handleDownloadPDF = useMemoizedFn(() => {
@@ -152,14 +201,21 @@ function InteractiveAvatar() {
       return;
     }
 
+    if (isGeneratingFeedback) {
+      alert("Please wait while we finish generating your feedback...");
+      return;
+    }
+
+    const endTime = sessionEndTime || new Date();
     const sessionDuration = sessionStartTime
-      ? formatDuration(Date.now() - sessionStartTime.getTime())
+      ? formatDuration(endTime.getTime() - sessionStartTime.getTime())
       : undefined;
 
     downloadTranscriptPDF(messagesToDownload, {
       sessionDate: sessionStartTime?.toLocaleString() || new Date().toLocaleString(),
       sessionDuration,
       avatarName: "BrewSpot Becca",
+      feedback: feedback || undefined,
     });
   });
 
@@ -178,8 +234,6 @@ function InteractiveAvatar() {
       });
       const token = await response.text();
 
-      console.log("Access Token:", token); // Log the token to verify
-
       return token;
     } catch (error) {
       console.error("Error fetching access token:", error);
@@ -192,6 +246,9 @@ function InteractiveAvatar() {
     setSavedMessages([]);
     setHasEndedSession(false);
     setSessionStartTime(null);
+    setSessionEndTime(null);
+    setFeedback(null);
+    setIsGeneratingFeedback(false);
   });
 
   const startSessionV2 = useMemoizedFn(async (isVoiceChat: boolean) => {
@@ -199,39 +256,42 @@ function InteractiveAvatar() {
       // Clear saved messages when starting a new session
       setSavedMessages([]);
       setHasEndedSession(false);
+      setSessionEndTime(null);
+      setFeedback(null);
+      setIsGeneratingFeedback(false);
 
       const newToken = await fetchAccessToken();
       const avatar = initAvatar(newToken);
 
       avatar.on(StreamingEvents.AVATAR_START_TALKING, (e) => {
-        console.log("Avatar started talking", e);
+        // Avatar started talking
       });
       avatar.on(StreamingEvents.AVATAR_STOP_TALKING, (e) => {
-        console.log("Avatar stopped talking", e);
+        // Avatar stopped talking
       });
       avatar.on(StreamingEvents.STREAM_DISCONNECTED, () => {
-        console.log("Stream disconnected");
+        // Stream disconnected
       });
       avatar.on(StreamingEvents.STREAM_READY, (event) => {
-        console.log(">>>>> Stream ready:", event.detail);
+        // Stream is ready
       });
       avatar.on(StreamingEvents.USER_START, (event) => {
-        console.log(">>>>> User started talking:", event);
+        // User started talking
       });
       avatar.on(StreamingEvents.USER_STOP, (event) => {
-        console.log(">>>>> User stopped talking:", event);
+        // User stopped talking
       });
       avatar.on(StreamingEvents.USER_END_MESSAGE, (event) => {
-        console.log(">>>>> User end message:", event);
+        // User end message
       });
       avatar.on(StreamingEvents.USER_TALKING_MESSAGE, (event) => {
-        console.log(">>>>> User talking message:", event);
+        // User talking message
       });
       avatar.on(StreamingEvents.AVATAR_TALKING_MESSAGE, (event) => {
-        console.log(">>>>> Avatar talking message:", event);
+        // Avatar talking message
       });
       avatar.on(StreamingEvents.AVATAR_END_MESSAGE, (event) => {
-        console.log(">>>>> Avatar end message:", event);
+        // Avatar end message
       });
 
       await startAvatar(config);
@@ -384,8 +444,19 @@ function InteractiveAvatar() {
             </p>
           </div>
         )}
+        {isGeneratingFeedback && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[#f3e7da]/90 backdrop-blur-sm">
+            <LoadingIcon size={48} className="text-[#b87241]" />
+            <p className="text-base font-medium text-[#7a553d]">
+              Brewing your personalized feedback…
+            </p>
+            <p className="text-sm text-[#87614a] max-w-md text-center px-4">
+              Our AI coach is analyzing your discovery call and preparing detailed suggestions. This may take a moment.
+            </p>
+          </div>
+        )}
       </div>
-      {!showPostSessionView && (
+      {!showPostSessionView && !isGeneratingFeedback && (
         <div className="flex flex-wrap items-center justify-center gap-4">
           <Button
             onClick={() => startSessionV2(true)}
